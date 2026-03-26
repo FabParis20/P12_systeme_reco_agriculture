@@ -1,9 +1,11 @@
 import streamlit as st
 import requests
 import pandas as pd
+import os
 
 # --- CONFIGURATION ---
 API_URL = "http://127.0.0.1:8000"
+API_BASE_URL = os.getenv("API_URL", "https://api-agricole-fab.onrender.com")
 
 # Listes de choix pour nos menus déroulants
 LISTE_CULTURES = ["Wheat", "Maize", "Rice", "Soybean"]

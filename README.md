@@ -14,7 +14,7 @@ Le projet est disponible en ligne sans aucune installation requise. L'architectu
 
 * **💻 Interface Utilisateur (Frontend) :** [Interface de prédiction (Streamlit)](https://p12systemerecoagriculture-3nk8c55ydyym5mebpp98cr.streamlit.app/)  
     *Interface intuitive pour tester les prédictions de rendement et les recommandations de cultures.*
-* **⚙️ API de Prédiction (Backend) :** [LMoteur de calcul & Modèles (FastAPI)](https://api-agricole-fab.onrender.com/docs)  
+* **⚙️ API de Prédiction (Backend) :** [Moteur de calcul & Modèles (FastAPI)](https://api-agricole-fab.onrender.com/docs)  
     *Documentation interactive (Swagger) de l'API FastAPI.*
 # 🚜 Système de Recommandation Agricole (Projet 12)
 
@@ -58,3 +58,12 @@ docker run -p 8000:8000 ghcr.io/fabparis20/p12_systeme_reco_agriculture:latest
 # 3. Lancer l'interface Frontend (nécessite Python)
 pip install -r requirements.txt
 streamlit run app.py
+```
+## 🛠️ Pipeline CI/CD
+
+Le workflow **GitHub Actions** assure l'intégrité et la qualité du code à chaque modification poussée sur la branche `main` :
+
+1.  **🧪 Linter & Tests :** Exécution automatisée des tests unitaires via `pytest` pour valider la logique métier et les endpoints de l'API.
+2.  **🏗️ Build :** Si les tests sont au vert, construction d'une nouvelle image **Docker** optimisée (utilisant `uv` pour une gestion rapide des dépendances).
+3.  **🚀 Deploy :** * **Registry :** Publication de l'image sur le **GitHub Container Registry (GHCR)**.
+    * **Cloud :** Déploiement automatique du nouveau conteneur sur **Render** via un Webhook, assurant une mise à jour transparente du backend.

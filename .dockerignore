@@ -24,4 +24,15 @@ mlruns/
 requirements-dev.txt
 
 # Données brutes, intermédiaires et modèles d'entraînement lourds
-data/
+data/*
+*.parquet
+
+# MAIS on crée des exceptions pour les fichiers du 5 mars nécessaires à l'API
+!data/processed/
+data/processed/*
+!data/processed/business_rules.json
+!data/processed/climate_reference.csv
+!data/processed/df_fao_consolidated.csv
+!data/processed/df_fao_engineered.csv
+!data/processed/dummy_synthetique.csv
+!data/processed/soil_coefficients_audit.pkl

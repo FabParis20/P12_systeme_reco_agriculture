@@ -1,0 +1,32 @@
+name: CI Pipeline
+
+# 1. L'élément déclencheur
+on:
+  push:
+    branches:
+      - main
+
+# 2. La machine virtuelle
+jobs:
+  test-api:
+    name: Tests unitaires de l'API
+    runs-on: ubuntu-latest
+
+    # 3. Les étapes
+    steps:
+      - name: 📥 Récupération du code source
+        uses: actions/checkout@v4
+
+      - name: 🐍 Installation de Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: ⚡ Installation de l'outil uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: 📦 Installation des dépendances du projet
+        run: uv sync
+
+      - name: 🧪 Lancement des tests automatisés
+        run: uv run pytest tests/

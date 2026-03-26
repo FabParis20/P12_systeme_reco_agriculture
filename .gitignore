@@ -46,3 +46,4 @@ mlruns/
 # 7. Modèles testés
 # =========================
 data/models/
+notebook/sandbox/

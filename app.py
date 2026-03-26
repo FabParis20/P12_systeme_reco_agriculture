@@ -4,8 +4,9 @@ import pandas as pd
 import os
 
 # --- CONFIGURATION ---
-API_URL = "http://127.0.0.1:8000"
-API_BASE_URL = os.getenv("API_URL", "https://api-agricole-fab.onrender.com")
+# Une seule variable pour tout le projet
+# On cherche "API_URL" dans le système (Cloud). Si on ne trouve rien, on prend le localhost.
+API_URL = os.getenv("API_URL", "http://127.0.0.1:8000")
 
 # Listes de choix pour nos menus déroulants
 LISTE_CULTURES = ["Wheat", "Maize", "Rice", "Soybean"]

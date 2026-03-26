@@ -9,8 +9,17 @@ Old/
 # 2. Données et Modèles lourds
 # =========================
 data/raw/
-data/processed/
+# On ignore le contenu du dossier et les gros fichiers parquet
+data/processed/*
 *.parquet
+
+# MAIS on crée des exceptions pour les fichiers du 5 mars
+!data/processed/business_rules.json
+!data/processed/climate_reference.csv
+!data/processed/df_fao_consolidated.csv
+!data/processed/df_fao_engineered.csv
+!data/processed/dummy_synthetique.csv
+!data/processed/soil_coefficients_audit.pkl
 # Note : on laisse le dossier models/ racine car l'API en a besoin pour tourner
 
 # =========================

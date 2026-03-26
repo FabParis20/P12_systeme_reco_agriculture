@@ -1,0 +1,35 @@
+name: CD Pipeline - Docker Build & Push
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    name: Construction et Envoi de l'image Docker
+    runs-on: ubuntu-latest
+    
+    # Autorisation vitale : on donne à la machine le droit de pousser une image dans ton entrepôt GitHub
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: 📥 Récupération du code source
+        uses: actions/checkout@v4
+
+      - name: 🔐 Connexion à l'entrepôt GitHub (GHCR)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🐳 Construction et envoi de l'image Docker
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          # Le nom de l'image (obligatoirement en minuscules pour Docker !)
+          tags: ghcr.io/fabparis20/p12_systeme_reco_agriculture:latest

@@ -1,0 +1,27 @@
+# Environnements virtuels et secrets
+.venv/
+venv/
+env/
+.env
+
+# Git et GitHub
+.git/
+.github/
+
+# Cache Python et outils de tests
+__pycache__/
+*.pyc
+.pytest_cache/
+htmlcov/
+.coverage
+tests/
+
+# Outils de développement Data Science
+notebook/
+*.ipynb
+mlflow.db
+mlruns/
+requirements-dev.txt
+
+# Données brutes, intermédiaires et modèles d'entraînement lourds
+data/

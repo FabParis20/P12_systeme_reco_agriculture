@@ -1,6 +1,48 @@
-# Classement de travail personnel
+# =========================
+# 1. Classement personnel
+# =========================
 perso/
 Old/
+/anciens_projets_ref
 
-# Fichiers bruts
+# =========================
+# 2. Données et Modèles lourds
+# =========================
 data/raw/
+data/processed/
+*.parquet
+# Note : on laisse le dossier models/ racine car l'API en a besoin pour tourner
+
+# =========================
+# 3. Environnements virtuels & Secrets
+# =========================
+.venv/
+venv/
+env/
+.env
+
+# =========================
+# 4. Cache Python & Jupyter
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+.ipynb_checkpoints/
+
+# =========================
+# 5. Tests & CI/CD
+# =========================
+.pytest_cache/
+htmlcov/
+.coverage
+
+# =========================
+# 6. Outils MLOps
+# =========================
+mlflow.db
+mlruns/
+
+# =========================
+# 7. Modèles testés
+# =========================
+data/models/

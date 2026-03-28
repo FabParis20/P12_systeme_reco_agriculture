@@ -4,7 +4,7 @@ from typing import Literal
 import pandas as pd
 import joblib
 import json
-from api.services import predict_single_crop, recommend_best_crop
+from api.services import predict_single_crop, recommend_best_crop, DataNotFoundError
 
 # 1. Importation de tes chemins absolus (config.paths)
 from config.paths import DOSSIER_MODELES, DONNEES_PROCESSED
@@ -76,6 +76,8 @@ class RequeteRecommandation(RequeteBase):
     """Hérite de la base. Pas besoin d'ajouter 'Item' ici !"""
     pass
 
+
+
 # ==========================================
 # CRÉATION DE L'APPLICATION FASTAPI
 # ==========================================
@@ -104,6 +106,10 @@ def predict_yield(requete: RequetePrediction):
         resultat = predict_single_crop(dict_user, modele_prod, ref_table, trend_table)
              
         return {"status": "success", "data": resultat}
+    
+    # Erreur spécifique pas de data
+    except DataNotFoundError as e:
+        return {"status": "no_data", "message": str(e)}
         
     except Exception as e:
         # On capture l'erreur Python interne et on la renvoie proprement en HTTP 500
@@ -120,6 +126,10 @@ def recommend_crops(requete: RequeteRecommandation):
         json_resultat = resultat_df.to_dict(orient='records')
                         
         return {"status": "success", "data": json_resultat}
+    
+    # Erreur No data recommandation
+    except DataNotFoundError as e:
+        return {"status": "no_data", "message": str(e)}
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur interne lors de la recommandation : {str(e)}")

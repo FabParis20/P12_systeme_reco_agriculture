@@ -3,6 +3,10 @@ import json
 import numpy as np # (Par sécurité, souvent utile avec Pandas)
 from config.paths import DONNEES_PROCESSED
 
+class DataNotFoundError(Exception):
+    """Exception levée quand le pays/culture n'a pas assez d'historique FAO."""
+    pass
+
 # 1. PARAMÈTRES AGRONOMIQUES FAO
 CROP_PARAMS = {
     'Wheat':   {'rain_opt': 550,  'temp_opt_min': 15, 'temp_opt_max': 25, 'temp_crit': 30},
@@ -80,12 +84,21 @@ def predict_single_crop(dict_user, modele, ref_table, trend_table):
     pays = dict_user["Area"]
     culture = dict_user["Item"]
     
-    # Récupération météo
-    meteo_pays = ref_table[ref_table['Area'] == pays].iloc[0]
+    # Récupération météo : Vérification si le pays existe dans ref_table
+    meteo_filtree = ref_table[ref_table['Area'] == pays]
+    if meteo_filtree.empty:
+        raise DataNotFoundError(f"Données météo et pesticides introuvables pour le pays : {pays}")
+    meteo_pays = meteo_filtree.iloc[0]
+
     
     # Récupération de la tendance technologique (2013 pour simuler 2014)
     filtre_trend = (trend_table['Area'] == pays) & (trend_table['Item'] == culture)
-    tendance_tech = trend_table[filtre_trend]['yield_trend'].values[0]
+    trend_filtree = trend_table[filtre_trend]
+
+    if trend_filtree.empty:
+        raise DataNotFoundError(f"L'historique FAO est insuffisant pour prédire le rendement de : {culture} en {pays}")
+
+    tendance_tech = trend_filtree['yield_trend'].values[0]
     
     # Création du dictionnaire compatible avec l'entraînement
     dict_ml = {
@@ -143,22 +156,30 @@ def recommend_best_crop(dict_user_base, modele, ref_table, trend_table):
         
         # On injecte la culture en cours de test
         dict_simulation["Item"] = culture
+
+        #==============================================
         
-        # On appelle notre orchestrateur
-        prediction = predict_single_crop(
-            dict_user=dict_simulation,
-            modele=modele,
-            ref_table=ref_table,
-            trend_table=trend_table
-        )
+        try:
+            # On tente la prédiction
+            prediction = predict_single_crop(
+                dict_user=dict_simulation,
+                modele=modele,
+                ref_table=ref_table,
+                trend_table=trend_table
+            )
+            # Si ça marche, on ajoute au tableau
+            resultats_simulation.append({
+                "Culture_Recommandée": culture,
+                "Rendement_Macro_t_ha": prediction["rendement_macro_t_ha"],
+                "Rendement_Ajusté_t_ha": prediction["rendement_ajuste_t_ha"]
+            })
+        except DataNotFoundError:
+            # Si cette culture précise n'a pas de données, on passe simplement à la suivante
+            
+            continue
+
         
-        # On stocke le résultat dans un dictionnaire temporaire
-        resultats_simulation.append({
-            "Culture_Recommandée": culture,
-            "Rendement_Macro_t_ha": prediction["rendement_macro_t_ha"],
-            "Rendement_Ajusté_t_ha": prediction["rendement_ajuste_t_ha"]
-        })
-        
+    #=============================================================================
     # 4. Conversion finale en DataFrame et Tri décroissant
     df_recommandations = pd.DataFrame(resultats_simulation)
     df_recommandations = df_recommandations.sort_values(by="Rendement_Ajusté_t_ha", ascending=False)

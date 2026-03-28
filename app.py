@@ -70,46 +70,40 @@ if mode == "🔮 Mode Prédiction":
             "Fertilizer_Used": int(engrais),
             "Irrigation_Used": int(irrigation)
         }
-
+        # =======================================================================
         # 2. Envoi au serveur (API)
         with st.spinner("Analyse agronomique en cours..."):
             try:
                 response = requests.post(f"{API_URL}/predict", json=payload)
                 
-                # Vérification que l'API a bien répondu
                 if response.status_code == 200:
-                    resultat = response.json()["data"]
+                    json_res = response.json()
                     
-                    st.success("Analyse terminée avec succès !")
-                    
-                    ## --- 3. Affichage visuel des résultats ---
-                    # Extraction des variables pour simplifier la lecture
-                    macro = resultat['rendement_macro_t_ha']
-                    micro = resultat['rendement_ajuste_t_ha']
-                    
-                    # Calcul de l'impact réel (le delta)
-                    impact_pratiques = micro - macro
-                    
-                    # Les métriques avec formatage d'arrondi Python (:.2f)
-                    col_res1, col_res2 = st.columns(2)
-                    col_res1.metric(
-                        label="Rendement Base (Macro)", 
-                        value=f"{macro:.2f} t/ha"
-                    )
-                    col_res2.metric(
-                        label="Rendement Ajusté (Micro)", 
-                        value=f"{micro:.2f} t/ha", 
-                        delta=f"{impact_pratiques:+.2f} t/ha (Impact Pratiques)"
-                    )
-                    
-                    # --- 4. Explication pédagogique (Expander) ---
-                    st.write("") # Petit espace
-                    with st.expander("ℹ️ Comment interpréter ces chiffres ?"):
-                        st.markdown("""
-                        **🌍 Rendement Base (Macro) :** C'est le potentiel régional calculé par notre Intelligence Artificielle. Il se base sur le climat historique et la tendance technologique de votre pays.
+                    # --- NOUVELLE LOGIQUE DE STATUT ---
+                    if json_res.get("status") == "success":
+                        resultat = json_res["data"]
+                        st.success("Analyse terminée avec succès !")
                         
-                        **🌱 Rendement Ajusté (Micro) :** C'est l'estimation finale sur-mesure pour votre parcelle. Notre système a appliqué des bonus ou malus agronomiques selon *vos* pratiques (qualité du sol, apport d'eau et de nutriments).
-                        """)
+                        macro = resultat['rendement_macro_t_ha']
+                        micro = resultat['rendement_ajuste_t_ha']
+                        impact_pratiques = micro - macro
+                        
+                        col_res1, col_res2 = st.columns(2)
+                        col_res1.metric(label="Rendement Base (Macro)", value=f"{macro:.2f} t/ha")
+                        col_res2.metric(label="Rendement Ajusté (Micro)", value=f"{micro:.2f} t/ha", delta=f"{impact_pratiques:+.2f} t/ha")
+                        
+                        with st.expander("ℹ️ Comment interpréter ces chiffres ?"):
+
+                            st.markdown("""
+                            **🌍 Rendement Base (Macro) :** C'est le potentiel régional calculé par notre Intelligence Artificielle. Il se base sur le climat historique et la tendance technologique de votre pays.
+                            
+                            **🌱 Rendement Ajusté (Micro) :** C'est l'estimation finale sur-mesure pour votre parcelle. Notre système a appliqué des bonus ou malus agronomiques selon *vos* pratiques (qualité du sol, apport d'eau et de nutriments).
+                            """)
+                    elif json_res.get("status") == "no_data":
+                        # Gestion propre du cas "Riz en Albanie"
+                        st.warning("⚠️ Données insuffisantes")
+                        st.info(f"**Message de l'expert :** {json_res.get('message')}")
+                        st.write("Ce pays est répertorié, mais l'historique FAO pour cette culture spécifique est trop partiel pour permettre une prédiction fiable.")
                 else:
                     st.error(f"Erreur API : {response.json().get('detail', 'Erreur inconnue')}")
             
@@ -152,24 +146,27 @@ elif mode == "🏆 Mode Recommandation":
                 response = requests.post(f"{API_URL}/recommend", json=payload)
                 
                 if response.status_code == 200:
-                    data = response.json()["data"]
-                    
-                    # 3. Affichage visuel (Tableau + Graphique)
-                    df_resultats = pd.DataFrame(data)
-                    # On renomme l'index pour que le tableau commence à 1
-                    df_resultats.index += 1 
-                    
-                    st.success(f"La culture recommandée est le {df_resultats.iloc[0]['Culture_Recommandée']} !")
-                    
-                    # Le graphique en barres natif de Streamlit
-                    st.bar_chart(data=df_resultats, x="Culture_Recommandée", y="Rendement_Ajusté_t_ha", color="#2e7b32")
-                    
-                    # Le tableau de données brutes
-                    st.write("Détail des simulations :")
-                    st.dataframe(df_resultats, use_container_width=True)
-                    
+                    json_res = response.json()
+
+                    if json_res.get("status") == "success":
+                        data = json_res["data"]
+                        df_resultats = pd.DataFrame(data)
+                        df_resultats.index += 1 
+                        
+                        st.success(f"La culture recommandée est le {df_resultats.iloc[0]['Culture_Recommandée']} !")
+                        st.bar_chart(data=df_resultats, x="Culture_Recommandée", y="Rendement_Ajusté_t_ha", color="#2e7b32")
+                        st.dataframe(df_resultats, use_container_width=True)
+                        
+                        # Petit conseil bonus si le tableau fait moins de 4 lignes
+                        if len(df_resultats) < 4:
+                            st.caption("Note : Certaines cultures ont été écartées par manque d'historique fiable pour ce pays.")
+
+                    elif json_res.get("status") == "no_data":
+                        st.error("❌ Recommandation impossible")
+                        st.warning(json_res.get("message"))
+                
                 else:
-                    st.error(f"Erreur API : {response.json().get('detail', 'Erreur inconnue')}")
+                    st.error("Erreur serveur lors de la simulation.")
                     
             except requests.exceptions.ConnectionError:
                 st.error("Impossible de contacter l'API. Vérifiez que Uvicorn tourne bien !")
